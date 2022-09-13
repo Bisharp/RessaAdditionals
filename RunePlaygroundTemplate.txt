@@ -1,0 +1,110 @@
+/// Special attribute that's value is the name that a tag should resolve to
+const RESOLVES_TO = "???";
+
+/// Context used by the Parser, storing local variables (#{varname}) and objects/tags
+pub struct ParserContext {
+    objectlike_data,
+    variables,
+    transients
+}
+
+/// Convert the context into the result format
+impl ParserContext {
+    fn do_make_attribute(self, obj_name, attr_name, attr_type) {
+        // If a reference to a non-existant object, create it
+        if !self.objectlike_data.contains_key(obj_name) {
+            self.make_object(obj_name);
+        }
+
+        // Insert
+        let vars = self.objectlike_data.get_mut(obj_name).unwrap();
+        vars[attr_name] = attr_type;
+    }
+
+    fn make_object(self, name) {
+        if !self.objectlike_data.contains_key(name) {
+            self.objectlike_data.insert(name, #{});
+        }
+    }
+
+    fn save(self, name, value) {
+        self.objectlike_data.insert(name, value); // self.resolve_tag(name), value);
+        self.get(name).unwrap()
+    }
+
+    fn save_transient(self, name, value) {
+        self.make_transient(name);
+        self.save(name, value)
+    }
+
+    fn get(self, name) {
+        self.objectlike_data.get(name) // self.resolve_tag(name))
+    }
+
+    fn get_or_save(self, name, val) {
+        if !self.objectlike_data.contains_key(name) {
+            self.save(name, val)
+        } else {
+            self.get(name).unwrap()
+        }
+    }
+
+    fn make_tag(self, name, resolves_to) {
+        self.do_make_attribute(name, RESOLVES_TO, Some(resolves_to));
+    }
+
+    fn make_transient(self, name) {
+        self.make_object(name);
+        // self.transients.insert(self.resolve_tag(name));
+    }
+
+    /*
+    fn resolve_tag(self, name) {
+        // Check that the object exists
+        if let Some(map) = self.objectlike_data.get(name) {
+            // Check that the tag is not self-referential, and return resolving it
+            if let Some(tag) = map.get(RESOLVES_TO) {
+                let tag = tag.as_str();
+                assert!(tag != name, "{}", name);
+                return self.resolve_tag(tag);
+            }
+        }
+        name
+    }
+	*/
+
+    fn make_variable(self, name, val) {
+        self.variables.insert(name, val);
+    }
+
+    fn get_variable(self, name) {
+        self.variables.get(name)
+    }
+
+    fn clear_variables(self) {
+        self.variables.clear();
+    }
+}
+
+fn run() {
+	// Setup
+	let ctx = ParserContext {
+		objectlike_data: #{
+			/* Populate expected objects */
+		},
+		variables: #{
+			/* Populate expected variables */
+		},
+		transients: #{ /* Logically unused, ignore */ }
+	};
+
+	// Script
+	
+	/* Write callback here */
+
+	Some(ctx)
+}
+
+pub fn main() {
+	run()?.objectlike_data
+}
